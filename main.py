@@ -1,69 +1,59 @@
-import tkinter as tk
 from datetime import datetime, timedelta
+import tkinter as tk
+from datetime import datetime
 
-class PlantTracker:
-    def __init__(self):
-        self.plants = {}  # Dictionary to store plant information
+class Plant:
+    def __init__(self, name, last_watered):
+        self.name = name
+        self.last_watered = last_watered
 
-        # Create the main window
-        self.root = tk.Tk()
-        self.root.title("Plant Watering Tracker")
+    def water(self):
+        self.last_watered = datetime.now()
 
-        # Plant selection dropdown
-        self.plant_label = tk.Label(self.root, text="Select Plant:")
+    def needs_watering(self, days_interval):
+        return (datetime.now() - self.last_watered).days >= days_interval
+
+# Example usage:
+plants = {
+    'Rose': Plant('Rose', datetime.now() - timedelta(days=1)),
+    'Fern': Plant('Fern', datetime.now() - timedelta(days=3))
+}
+
+preset_interval =  2  # Preset interval for watering in days
+
+for plant_name, plant in plants.items():
+    if plant.needs_watering(preset_interval):
+        print(f"{plant_name} needs watering.")
+
+class PlantApp:
+    def __init__(self, root):
+        self.root = root
+        self.plants = {}
+        self.create_widgets()
+
+    def create_widgets(self):
+        self.plant_label = tk.Label(self.root, text="Select a plant to water:")
         self.plant_label.pack()
 
-        self.plant_var = tk.StringVar()
-        self.plant_dropdown = tk.OptionMenu(self.root, self.plant_var, *self.plants.keys())
-        self.plant_dropdown.pack()
+        self.plant_listbox = tk.Listbox(self.root)
+        self.plant_listbox.pack()
 
-        # Last watered entry
-        self.last_watered_label = tk.Label(self.root, text="Last Watered:")
-        self.last_watered_label.pack()
-
-        self.last_watered_var = tk.StringVar()
-        self.last_watered_entry = tk.Entry(self.root, textvariable=self.last_watered_var)
-        self.last_watered_entry.pack()
-
-        # Button to record watering
-        self.water_button = tk.Button(self.root, text="Water Plant", command=self.water_plant)
+        self.water_button = tk.Button(self.root, text="Water", command=self.water_selected_plant)
         self.water_button.pack()
 
-        # Check plants button
-        self.check_button = tk.Button(self.root, text="Check Plants", command=self.check_plants)
-        self.check_button.pack()
+    def water_selected_plant(self):
+        selected_plant = self.plant_listbox.get(tk.ACTIVE)
+        if selected_plant in self.plants:
+            self.plants[selected_plant].water()
+            print(f"{selected_plant} has been watered.")
 
-    def water_plant(self):
-        plant_name = self.plant_var.get()
-        last_watered = self.last_watered_var.get()
-
-        # Convert last watered to datetime object
-        last_watered_date = datetime.strptime(last_watered, "%Y-%m-%d")
-
-        # Update or add plant entry
-        self.plants[plant_name] = last_watered_date
-
-        # Clear the entry fields
-        self.plant_var.set('')
-        self.last_watered_var.set('')
-
-    def check_plants(self):
-        current_date = datetime.now()
-
-        # Preset time for each specific plant (you can adjust these values)
-        preset_time = {
-            'Plant1': 7,   # 7 days
-            'Plant2': 5,   # 5 days
-            'Plant3': 10   # 10 days
-            # Add more plants as needed
-        }
-
-        for plant, last_watered_date in self.plants.items():
-            days_since_last_watered = (current_date - last_watered_date).days
-
-            if plant in preset_time and days_since_last_watered > preset_time[plant]:
-                print(f"{plant} needs to be watered!")
+    def add_plant(self, plant_name):
+        self.plant_listbox.insert(tk.END, plant_name)
+        self.plants[plant_name] = Plant(plant_name, datetime.now())
 
 if __name__ == "__main__":
-    tracker = PlantTracker()
-    tracker.root.mainloop()
+    root = tk.Tk()
+    app = PlantApp(root)
+    app.add_plant("Rose")
+    app.add_plant("Fern")
+    root.mainloop()
